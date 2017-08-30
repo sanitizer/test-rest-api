@@ -6,21 +6,48 @@ import (
 	"github.com/go-resty/resty"
 	"github.com/sanitizer/test-rest-api/client/mdl"
 	"errors"
-	"strconv"
 )
 
-func Assert(expected interface{}, actual interface{}, t *testing.T, testId string) {
+func AssertEquals(expected interface{}, actual interface{}, t *testing.T, testId string) {
 	if expected != actual {
 		switch expected.(type) {
 		case int:
-			t.Errorf("Assertion failure in %q. expected: %q\tactual: %q", testId, strconv.Itoa(expected.(int)), strconv.Itoa(actual.(int)))
+			t.Errorf("Assertion failure in %q. expected: %d\tactual: %d", testId, expected.(int), actual.(int))
 		case string:
 			t.Errorf("Assertion failure in %q. expected: %q\tactual: %q", testId, expected, actual)
 		}
+	}else {
+		t.Log("----> ", testId, " Passed")
 	}
+}
 
-	t.Log("----> ", testId, " Passed")
+func AssertNotEquals(expected interface{}, actual interface{}, t *testing.T, testId string) {
+	if expected == actual {
+		switch expected.(type) {
+		case int:
+			t.Errorf("Assertion failure in %q. expected: %d\tactual: %d SHOULD NOT EQUAL", testId, expected.(int), actual.(int))
+		case string:
+			t.Errorf("Assertion failure in %q. expected: %q\tactual: %q SHOULD NOT EQUAL", testId, expected, actual)
+		}
+	}else {
+		t.Log("----> ", testId, " Passed")
+	}
+}
 
+func AssertNotEmpty(value string, testId string, t *testing.T) {
+	if value == "" {
+		t.Errorf("Assertion failure in %q. Value is empty.", testId)
+	} else {
+		t.Log("----> ", testId, " Passed")
+	}
+}
+
+func AssertEmpty(value string, testId string, t *testing.T) {
+	if value != "" {
+		t.Errorf("Assertion failure in %q. Value is not empty. Value: %q", testId, value)
+	} else {
+		t.Log("----> ", testId, " Passed")
+	}
 }
 
 func AssertError(e error, t *testing.T) {

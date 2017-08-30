@@ -11,7 +11,12 @@ const (
 	JSON = "application/json"
 	TEXT = "application/text"
 	XML = "application/xml"
+	HASH_LEN = 88
+	MAX_UINT = ^uint64(0)
 )
+
+
+var SHUTDOWN_REQ_BODY = []byte(`shutdown`)
 
 type Stats struct {
 	Requests int `json:"TotalRequests" xml:"TotalRequests" text:"TotalRequests"`
