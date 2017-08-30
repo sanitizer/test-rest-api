@@ -3,13 +3,13 @@ package client
 import
 (
 	"testing"
-	"net/http"
-	"log"
-	"io/ioutil"
 	"fmt"
 	"encoding/json"
 	"bytes"
 	"io"
+	"strconv"
+	"github.com/go-resty/resty"
+	"errors"
 )
 
 const (
@@ -39,25 +39,41 @@ func (this ReqBody) String() string {
 
 func TestSmokeGetRequests(t *testing.T) {
 	//GET Stats
-	response, e := sendRequst(GET_METHOD, STATS, nil)
-	handleError(e)
+	response, e := sendRequest(GET_METHOD, STATS, nil)
+	assertError(e, t)
 	stats := new(Stats)
-	e = json.Unmarshal(response, stats)
-	handleError(e)
+	e = json.Unmarshal(response.Body(), stats)
+	assertError(e, t)
 	fmt.Println("body: ", stats.String())
+	fmt.Sprintf("response code: %q", strconv.Itoa(response.StatusCode()))
+	fmt.Println("response status: ", response.Status())
 
 	//POST Password
 	req, _ := json.Marshal(ReqBody{Password:"test"})
-	response, e = sendRequst(POST_METHOD, HASH, bytes.NewBuffer(req))
-	jobId := string(response[:])
-	handleError(e)
+	response, e = sendRequest(POST_METHOD, HASH, bytes.NewBuffer(req))
+	jobId := string(response.Body())
+	assertError(e, t)
 	fmt.Println("body: ", jobId)
+	fmt.Sprintf("response code: %q", strconv.Itoa(response.StatusCode()))
+	fmt.Println("response status: ", response.Status())
 
 	//GET HASH
-	response, e = sendRequst(GET_METHOD, HASH + "/" + jobId, nil)
-	handleError(e)
-	hash := string(response[:])
+	response, e = sendRequest(GET_METHOD, HASH + "/" + jobId, nil)
+	assertError(e, t)
+	hash := string(response.Body())
 	fmt.Println("body: ", hash)
+	fmt.Sprintf("response code: %q", strconv.Itoa(response.StatusCode()))
+	fmt.Println("response status: ", response.Status())
+}
+
+func sendRequest(method string, url string, body io.Reader) (*resty.Response, error) {
+	switch method {
+	case GET_METHOD:
+		return resty.R().SetBody(body).Get(url)
+	case POST_METHOD:
+		return resty.R().SetBody(body).Post(url)
+	}
+	return nil, errors.New("Was not able to identify the method...")
 }
 
 
@@ -65,22 +81,17 @@ func TestSmokePostRequests(t *testing.T) {
 
 }
 
-func sendRequst(method string, url string, body io.Reader) ([]byte, error)  {
-	request, e := http.NewRequest(method, url, body)
 
-	if e != nil {
-		return nil, e
+func assert(expected string, actual string, t *testing.T, testId string) {
+	if expected != actual {
+		t.Errorf("Assertion failure in %q. expected: %q\tactual: %q", testId, expected, actual)
 	}
 
-	request.Header.Set("Content-type", "application/json")
-	cl := new (http.Client)
-	response, e := cl.Do(request)
-	defer response.Body.Close()
-	return ioutil.ReadAll(response.Body)
+	t.Log("----> ", testId, " Passed")
 }
 
-func handleError(e error) {
+func assertError(e error, t *testing.T) {
 	if e != nil {
-		log.Fatal("Error reading: " + e.Error())
+		t.Errorf("Failed based on received error: %q", e.Error())
 	}
 }
