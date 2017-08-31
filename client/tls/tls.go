@@ -34,6 +34,14 @@ func AssertNotEquals(expected interface{}, actual interface{}, t *testing.T, tes
 	}
 }
 
+func AssertWithin(lower int, upper int, value int, t *testing.T, testId string) {
+	if value > upper || value < lower {
+		t.Errorf("Assertion failure in %q. lower: %d\tupper: %d\tvalue: %d", testId, lower, upper, value)
+	}else {
+		t.Log("----> ", testId, " Passed")
+	}
+}
+
 func AssertNotEmpty(value string, testId string, t *testing.T) {
 	if value == "" {
 		t.Errorf("Assertion failure in %q. Value is empty.", testId)
