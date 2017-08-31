@@ -16,7 +16,7 @@ import (
 /*
 	Testing the fact that hash service can serve multiple simultaneous requests
  */
-func TestHashPostMethodWith1000Requests(t *testing.T) {
+func TestHashPostMethodWithNRequests(t *testing.T) {
 	var counter uint32
 	var wg sync.WaitGroup
 	for i := 1; i <= 1000; i++ {
@@ -41,7 +41,7 @@ func TestHashPostMethodWith1000Requests(t *testing.T) {
 /*
 	Testing the fact that hash service can serve multiple simultaneous requests
  */
-func TestHashGetMethodWith1000Requests(t *testing.T) {
+func TestHashGetMethodWithNRequests(t *testing.T) {
 	var counter uint32
 	var wg sync.WaitGroup
 
