@@ -19,3 +19,4 @@ what could potentially be added to the test suit:
   more corner cases (i bet i missed some, code reviews with the team would help with those)
   more load testing (to see at which load we can fail, also hit with bad requests alongside with good requests)
   add performance testing (currently i do not track performance in load testing, no test around how long does it take to create a hash)
+  check different content-type support(xml, text)
