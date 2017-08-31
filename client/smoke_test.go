@@ -10,6 +10,10 @@ import (
 	"strconv"
 )
 
+/*
+	Testing the correctness of status code
+	Testing the fact that although the method does not accept any body with request, the response data should not be affected
+ */
 func TestStatsGetMethodStatusOK(t *testing.T) {
 	response, e := tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
 	tls.AssertError(e, t)
@@ -21,6 +25,10 @@ func TestStatsGetMethodStatusOK(t *testing.T) {
 	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Stats endpoint with request body. Status OK")
 }
 
+/*
+	Testing the correctness of status code
+	Testing idempotency of post method
+ */
 func TestHashPostMethodStatusOk(t *testing.T) {
 	req, _ := json.Marshal(mdl.ReqBody{Password:"test"})
 	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
@@ -28,8 +36,21 @@ func TestHashPostMethodStatusOk(t *testing.T) {
 	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Test Hash endpoint with request body. Status OK")
 	jobId := string(response.Body())
 	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
+
+	//create a hash for the same password
+	req, _ = json.Marshal(mdl.ReqBody{Password:"test"})
+	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
+	tls.AssertError(e, t)
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Test Hash endpoint with request body. Status OK")
+	jobId2 := string(response.Body())
+	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
+	tls.AssertEquals(jobId, jobId2, t, "Test Hash endpoint with request body. POST method must be Idempotent.")
 }
 
+/*
+	Testing the correctness of status code
+	Testing retrieval of resources known and unknown
+ */
 func TestHashGetMethodStatusOk(t *testing.T) {
 	//Precondition (create a job id first)
 	req, _ := json.Marshal(mdl.ReqBody{Password:"test"})
@@ -76,6 +97,13 @@ func TestHashGetMethodStatusOk(t *testing.T) {
 	tls.AssertEquals(mdl.HASH_LEN, len(hash),t, "Test Hash endpoint with known job id. Hash length test")
 }
 
+/*
+	Testing the correctess of status codes
+	Testing numberic resource requests, negative and positive, existing resource and not existing resource
+	Testing with no jobId in the resource request
+	Testing with non numeric jobId in the resource request
+	Testing the fact that although the body in the request is not accepted, the returned data should not be affected
+ */
 func TestHashGetMethodStatusNotOk(t *testing.T) {
 	response, e := tls.SendRequest(mdl.GET_METHOD, mdl.HASH, nil, mdl.JSON)
 	tls.AssertError(e, t)
@@ -106,6 +134,10 @@ func TestHashGetMethodStatusNotOk(t *testing.T) {
 	tls.AssertEquals(http.StatusNotFound, response.StatusCode(), t, "Test Hash endpoint with job id that is just a high number. This test can be false negative. Status Not Found")
 }
 
+/*
+	Testing the correctness of status codes
+	Testing with sql injections as a password, password that is empty, password with spaces, regular password, empty body with request
+ */
 func TestHashPostMethodWithEmptyBodyOrEmptyPasswStatusNotOk(t *testing.T) {
 	req, _ := json.Marshal(mdl.ReqBody{Password:""})
 	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
@@ -135,13 +167,25 @@ func TestHashPostMethodWithEmptyBodyOrEmptyPasswStatusNotOk(t *testing.T) {
 	tls.AssertEquals("Malformed Input\n", jobId, t, "Test Hash endpoint without SQL Injection 2 with error in body")
 }
 
-// this is commented for now as it takes forever to restart the service
+/* 	this is commented for now as it takes forever to restart the service
+	Testing the correctness of status codes
+	Testing graceful shutdown
+	Testing the fact that no more requests should be processed while in the process of shutdown
+ */
 //func TestHashShutdownPostMethodStatusOkRequestAfterStatusNoResponse(t *testing.T) {
 //	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(mdl.SHUTDOWN_REQ_BODY), mdl.JSON)
 //	tls.AssertError(e, t)
 //	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Hash Shutdown. Status OK")
 //
 //	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
+//	tls.AssertError(e, t)
+//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t, "Test Stats after shutdown was initiated. Status Service Unavailable")
+
+//	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/1", nil, mdl.JSON)
+//	tls.AssertError(e, t)
+//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t, "Test Stats after shutdown was initiated. Status Service Unavailable")
+
+//	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, nil, mdl.JSON)
 //	tls.AssertError(e, t)
 //	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t, "Test Stats after shutdown was initiated. Status Service Unavailable")
 //}

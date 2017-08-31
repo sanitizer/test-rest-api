@@ -10,10 +10,14 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 )
 
+/*
+	Testing the fact that hash service can serve multiple simultaneous requests
+ */
 func TestHashPostMethodWith1000Requests(t *testing.T) {
-	var counter int
+	var counter uint32
 	var wg sync.WaitGroup
 	for i := 1; i <= 1000; i++ {
 		wg.Add(1)
@@ -24,18 +28,21 @@ func TestHashPostMethodWith1000Requests(t *testing.T) {
 			log.Println("Running routine #", i)
 			response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 			if http.StatusCreated != response.StatusCode() {
-				counter++
+				atomic.AddUint32(&counter, 1)
 			}
 			tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Creating hash with routine #" + strconv.Itoa(i))
 		}(i)
 	}
 
 	wg.Wait()
-	tls.AssertEquals(0, counter, t, "Validate number of failed routines in POST")
+	tls.AssertEquals(0, int(atomic.LoadUint32(&counter)), t, "Validate number of failed routines in POST")
 }
 
+/*
+	Testing the fact that hash service can serve multiple simultaneous requests
+ */
 func TestHashGetMethodWith1000Requests(t *testing.T) {
-	var counter int
+	var counter uint32
 	var wg sync.WaitGroup
 
 	req, e := json.Marshal(mdl.ReqBody{Password: "tesdgsdgsetsgdsdg"})
@@ -53,12 +60,12 @@ func TestHashGetMethodWith1000Requests(t *testing.T) {
 			tls.AssertError(e, t)
 
 			if http.StatusOK != r.StatusCode() {
-				counter++
+				atomic.AddUint32(&counter, 1)
 			}
 			tls.AssertEquals(http.StatusOK, r.StatusCode(), t, "Getting hash with routine #" + strconv.Itoa(i))
 		}(i, jobId)
 	}
 
 	wg.Wait()
-	tls.AssertEquals(0, counter, t, "Validate number of failed routines in GET")
+	tls.AssertEquals(0, int(atomic.LoadUint32(&counter)), t, "Validate number of failed routines in GET")
 }
