@@ -1,7 +1,6 @@
 package client
 
-import
-(
+import (
 	"testing"
 	"encoding/json"
 	"github.com/sanitizer/test-rest-api/client/mdl"
@@ -40,7 +39,7 @@ func TestStatsAverageTime(t *testing.T) {
 	end := time.Now()
 	timeTracking = append(timeTracking, end.Sub(start).Seconds() * 1000)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Create hash. Status Ok")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 
 	req, _ = json.Marshal(mdl.ReqBody{Password:"te"})
 	start = time.Now()
@@ -48,7 +47,7 @@ func TestStatsAverageTime(t *testing.T) {
 	end = time.Now()
 	timeTracking = append(timeTracking, end.Sub(start).Seconds() * 1000)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Create hash. Status Ok")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 
 	req, _ = json.Marshal(mdl.ReqBody{Password:"tes"})
 	start = time.Now()
@@ -56,7 +55,7 @@ func TestStatsAverageTime(t *testing.T) {
 	end = time.Now()
 	timeTracking = append(timeTracking, end.Sub(start).Seconds() * 1000)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Create hash. Status Ok")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 	// ------------------------------------------------------------------------------------------------
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
@@ -66,8 +65,8 @@ func TestStatsAverageTime(t *testing.T) {
 	lowerBound, upperBound := getBoundaries(timeTracking)
 	finalSum := getSumOfSubSetFromAverage(stats.Time, stats.Requests, initialSum, len(timeTracking))
 
-	tls.AssertEquals(initialNumOfReq + 3, stats.Requests, t, "Verifying correctness of computing number of requests")
-	tls.AssertWithin(lowerBound, upperBound, finalSum, t, "Verifying correctness of average computations")
+	tls.AssertEquals(initialNumOfReq + 3, stats.Requests, t)
+	tls.AssertWithin(lowerBound, upperBound, finalSum, t)
 }
 
 /*
@@ -85,25 +84,25 @@ func TestStatsNumOfRequests(t *testing.T) {
 	req, _ := json.Marshal(mdl.ReqBody{Password:"te"})
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Create hash. Status Created")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
 	tls.AssertError(e, t)
 	stats = new(mdl.Stats)
 	e = json.Unmarshal(response.Body(), stats)
 	tls.AssertError(e, t)
-	tls.AssertEquals(initialNumOfReq + 1, stats.Requests, t, "Number of requests on post hash endpoint")
+	tls.AssertEquals(initialNumOfReq + 1, stats.Requests, t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH, nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Get hash. Status Ok")
+	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
 	tls.AssertError(e, t)
 	stats = new(mdl.Stats)
 	e = json.Unmarshal(response.Body(), stats)
 	tls.AssertError(e, t)
-	tls.AssertEquals(initialNumOfReq + 2, stats.Requests, t, "Number of requests on post hash endpoint")
+	tls.AssertEquals(initialNumOfReq + 2, stats.Requests, t)
 }
 
 func getBoundaries(allTimes []float64) (lowerBound int, upperBound int) {
@@ -112,7 +111,7 @@ func getBoundaries(allTimes []float64) (lowerBound int, upperBound int) {
 
 	for _, val := range allTimes {
 		//substitute average upper bound latency in mills(between 5 - 40 based on google search)
-		lowerBoundTotal += val - 80
+		lowerBoundTotal += val - mdl.AVG_LATENCY
 		upperBoundTotal += val
 	}
 

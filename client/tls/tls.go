@@ -6,61 +6,60 @@ import (
 	"github.com/go-resty/resty"
 	"github.com/sanitizer/test-rest-api/client/mdl"
 	"errors"
+	"runtime/debug"
 )
 
-func AssertEquals(expected interface{}, actual interface{}, t *testing.T, testId string) {
+func AssertEquals(expected interface{}, actual interface{}, t *testing.T) {
 	if expected != actual {
 		switch expected.(type) {
 		case int:
-			t.Errorf("Assertion failure in %q. expected: %d\tactual: %d", testId, expected.(int), actual.(int))
+			debug.PrintStack()
+			t.Errorf("Equals Assertion failure. Expected: %d\tActual: %d", expected.(int), actual.(int))
 		case string:
-			t.Errorf("Assertion failure in %q. expected: %q\tactual: %q", testId, expected, actual)
+			debug.PrintStack()
+			t.Errorf("Equals Assertion failure. Expected: %d\tActual: %d", expected, actual)
 		}
-	}else {
-		t.Log("----> ", testId, " Passed")
 	}
 }
 
-func AssertNotEquals(expected interface{}, actual interface{}, t *testing.T, testId string) {
+func AssertNotEquals(expected interface{}, actual interface{}, t *testing.T) {
 	if expected == actual {
 		switch expected.(type) {
 		case int:
-			t.Errorf("Assertion failure in %q. expected: %d\tactual: %d SHOULD NOT EQUAL", testId, expected.(int), actual.(int))
+			debug.PrintStack()
+			t.Errorf("Not Equal Assertion failure. Expected: %d\tActual: %d", expected.(int), actual.(int))
 		case string:
-			t.Errorf("Assertion failure in %q. expected: %q\tactual: %q SHOULD NOT EQUAL", testId, expected, actual)
+			debug.PrintStack()
+			t.Errorf("Not Equal Assertion failure. Expected: %q\tActual: %q", expected, actual)
 		}
-	}else {
-		t.Log("----> ", testId, " Passed")
 	}
 }
 
-func AssertWithin(lower int, upper int, value int, t *testing.T, testId string) {
+func AssertWithin(lower int, upper int, value int, t *testing.T) {
 	if value > upper || value < lower {
-		t.Errorf("Assertion failure in %q. lower: %d\tupper: %d\tvalue: %d", testId, lower, upper, value)
-	}else {
-		t.Log("----> ", testId, " Passed")
+		debug.PrintStack()
+		t.Errorf("Within Assertion failure. Lower: %d\tUpper: %d\tValue: %d", lower, upper, value)
 	}
 }
 
-func AssertNotEmpty(value string, testId string, t *testing.T) {
+func AssertNotEmpty(value string, t *testing.T) {
 	if value == "" {
-		t.Errorf("Assertion failure in %q. Value is empty.", testId)
-	} else {
-		t.Log("----> ", testId, " Passed")
+		debug.PrintStack()
+		t.Errorf("Not Empty Assertion failure.")
 	}
 }
 
-func AssertEmpty(value string, testId string, t *testing.T) {
+func AssertEmpty(value string, t *testing.T) {
 	if value != "" {
-		t.Errorf("Assertion failure in %q. Value is not empty. Value: %q", testId, value)
-	} else {
-		t.Log("----> ", testId, " Passed")
+		debug.PrintStack()
+		t.Errorf("Empty Assertion failure. Value: %q", value)
 	}
 }
 
 func AssertError(e error, t *testing.T) {
 	if e != nil {
-		t.Errorf("Failed based on received error: %q", e.Error())
+		debug.PrintStack()
+		t.Errorf("Error Assertion failure: %q", e.Error())
 	}
 }
 

@@ -17,12 +17,21 @@ import (
 func TestStatsGetMethodStatusOK(t *testing.T) {
 	response, e := tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Stats endpoint without request body. Status OK")
+	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
+	stats := new(mdl.Stats)
+	e = json.Unmarshal(response.Body(), stats)
+	tls.AssertError(e,t)
 
 	reqBody := []byte(`{"hello": "world"}`)
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.STATS, bytes.NewBuffer(reqBody), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Stats endpoint with request body. Status OK")
+	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
+	stats2 := new(mdl.Stats)
+	e = json.Unmarshal(response.Body(), stats)
+	tls.AssertError(e, t)
+
+	tls.AssertEquals(stats.Requests, stats2.Requests, t)
+	tls.AssertEquals(stats.Time, stats2.Time, t)
 }
 
 /*
@@ -33,18 +42,18 @@ func TestHashPostMethodStatusOk(t *testing.T) {
 	req, _ := json.Marshal(mdl.ReqBody{Password:"test"})
 	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Test Hash endpoint with request body. Status OK")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 	jobId := string(response.Body())
-	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
+	tls.AssertNotEmpty(jobId, t)
 
 	//create a hash for the same password
 	req, _ = json.Marshal(mdl.ReqBody{Password:"test"})
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Test Hash endpoint with request body. Status OK")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 	jobId2 := string(response.Body())
-	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
-	tls.AssertEquals(jobId, jobId2, t, "Test Hash endpoint with request body. POST method must be Idempotent.")
+	tls.AssertNotEmpty(jobId, t)
+	tls.AssertEquals(jobId, jobId2, t)
 }
 
 /*
@@ -57,44 +66,44 @@ func TestHashGetMethodStatusOk(t *testing.T) {
 	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
 	jobId := string(response.Body())
-	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
+	tls.AssertNotEmpty(jobId, t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/" + jobId, nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Hash endpoint with known job id. Status OK")
+	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
 	hash := string(response.Body())
-	tls.AssertNotEmpty(hash,"Test Hash endpoint with known job id. Status OK", t)
-	tls.AssertEquals(mdl.HASH_LEN, len(hash),t, "Test Hash endpoint with known job id. Hash length test")
+	tls.AssertNotEmpty(hash, t)
+	tls.AssertEquals(mdl.HASH_LEN, len(hash), t)
 
 	//Precondition (create a job id first)
 	req, _ = json.Marshal(mdl.ReqBody{Password:"ThisistheTest"})
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
 	jobId = string(response.Body())
-	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
+	tls.AssertNotEmpty(jobId, t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/" + jobId, nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Hash endpoint with known job id. Status OK")
+	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
 	hash2 := string(response.Body())
-	tls.AssertNotEmpty(hash,"Test Hash endpoint with known job id. Status OK", t)
-	tls.AssertEquals(mdl.HASH_LEN, len(hash2),t, "Test Hash endpoint with known job id. Hash length test")
-	tls.AssertNotEquals(hash, hash2,t, "Test Hash endpoint with known job id. Hashs non equality test")
+	tls.AssertNotEmpty(hash, t)
+	tls.AssertEquals(mdl.HASH_LEN, len(hash2),t)
+	tls.AssertNotEquals(hash, hash2, t)
 
 	//Precondition (create a job id first)
 	req, _ = json.Marshal(mdl.ReqBody{Password:"ThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTestThisistheTest"})
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
 	jobId = string(response.Body())
-	tls.AssertNotEmpty(jobId, "Test Hash endpoint body returned job id", t)
+	tls.AssertNotEmpty(jobId, t)
 
 	reqBody := []byte(`{"hello": "world"}`)
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/" + jobId, bytes.NewBuffer(reqBody), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Hash endpoint with known job id with body. Status OK")
+	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
 	hash = string(response.Body())
-	tls.AssertNotEmpty(hash,"Test Hash endpoint with known job id. Status OK", t)
-	tls.AssertEquals(mdl.HASH_LEN, len(hash),t, "Test Hash endpoint with known job id. Hash length test")
+	tls.AssertNotEmpty(hash, t)
+	tls.AssertEquals(mdl.HASH_LEN, len(hash), t)
 }
 
 /*
@@ -107,31 +116,31 @@ func TestHashGetMethodStatusOk(t *testing.T) {
 func TestHashGetMethodStatusNotOk(t *testing.T) {
 	response, e := tls.SendRequest(mdl.GET_METHOD, mdl.HASH, nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusMethodNotAllowed, response.StatusCode(), t, "Test Hash endpoint without job id. Status Method not allowed")
+	tls.AssertEquals(http.StatusMethodNotAllowed, response.StatusCode(), t)
 
 	reqBody := []byte(`{"hello": "world"}`)
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH, bytes.NewBuffer(reqBody), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusMethodNotAllowed, response.StatusCode(), t, "Test Hash endpoint without job id with body. Status Method not allowed")
+	tls.AssertEquals(http.StatusMethodNotAllowed, response.StatusCode(), t)
 
 	//request with job id that is not a number
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/test", nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t, "Test Hash endpoint with job id that is NAN. Status Bad Request")
+	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/-1", nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t, "Test Hash endpoint with job id that does not exist. Status Bad Request")
+	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t)
 
 	//The assertions bellow assume that correct response would be 404 and not 400 as it is now
 	//request with job id of bigger than max uint64 in golang
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/" + strconv.FormatUint(mdl.MAX_UINT, 10) + "6", nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusNotFound, response.StatusCode(), t, "Test Hash endpoint with job id that is higher than int in go. Status Not Found")
+	tls.AssertEquals(http.StatusNotFound, response.StatusCode(), t)
 
 	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/6666666", nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusNotFound, response.StatusCode(), t, "Test Hash endpoint with job id that is just a high number. This test can be false negative. Status Not Found")
+	tls.AssertEquals(http.StatusNotFound, response.StatusCode(), t)
 }
 
 /*
@@ -142,29 +151,38 @@ func TestHashPostMethodWithEmptyBodyOrEmptyPasswStatusNotOk(t *testing.T) {
 	req, _ := json.Marshal(mdl.ReqBody{Password:""})
 	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t, "Test Hash endpoint with request body but empty password. Status Bad request")
+	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t)
 	jobId := string(response.Body())
-	tls.AssertEmpty(jobId, "Test Hash endpoint body returned job id", t)
+	tls.AssertEmpty(jobId, t)
+	if _, e := strconv.Atoi(jobId); e == nil {
+		t.Error("Returned jobId when expected error message. JobId: ", jobId)
+	}
 
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, nil, mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t, "Test Hash endpoint without request body. Status Bad request")
+	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t)
 	jobId = string(response.Body())
-	tls.AssertEquals("Malformed Input\n", jobId, t, "Test Hash endpoint without request body returns error msg in body")
+	if _, e := strconv.Atoi(jobId); e == nil {
+		t.Error("Returned jobId when expected error message. JobId: ", jobId)
+	}
 
 	req, _ = json.Marshal(mdl.ReqBody{Password:"0 or 1=1"})
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t, "Test Hash endpoint without SQL Injection 1. Status Bad request")
+	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t)
 	jobId = string(response.Body())
-	tls.AssertEquals("Malformed Input\n", jobId, t, "Test Hash endpoint without SQL Injection 1 with error in body")
+	if _, e := strconv.Atoi(jobId); e == nil {
+		t.Error("Returned jobId when expected error message. JobId: ", jobId)
+	}
 
 	req, _ = json.Marshal(mdl.ReqBody{Password:"0; Drop user administrator"})
 	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
 	tls.AssertError(e, t)
-	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t, "Test Hash endpoint without SQL Injection 2. Status Bad request")
+	tls.AssertEquals(http.StatusBadRequest, response.StatusCode(), t)
 	jobId = string(response.Body())
-	tls.AssertEquals("Malformed Input\n", jobId, t, "Test Hash endpoint without SQL Injection 2 with error in body")
+	if _, e := strconv.Atoi(jobId); e == nil {
+		t.Error("Returned jobId when expected error message. JobId: ", jobId)
+	}
 }
 
 /* 	this is commented for now as it takes forever to restart the service
@@ -175,17 +193,17 @@ func TestHashPostMethodWithEmptyBodyOrEmptyPasswStatusNotOk(t *testing.T) {
 //func TestHashShutdownPostMethodStatusOkRequestAfterStatusNoResponse(t *testing.T) {
 //	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(mdl.SHUTDOWN_REQ_BODY), mdl.JSON)
 //	tls.AssertError(e, t)
-//	tls.AssertEquals(http.StatusOK, response.StatusCode(), t, "Test Hash Shutdown. Status OK")
+//	tls.AssertEquals(http.StatusOK, response.StatusCode(), t)
 //
 //	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.STATS, nil, mdl.JSON)
 //	tls.AssertError(e, t)
-//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t, "Test Stats after shutdown was initiated. Status Service Unavailable")
+//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t)
 
 //	response, e = tls.SendRequest(mdl.GET_METHOD, mdl.HASH + "/1", nil, mdl.JSON)
 //	tls.AssertError(e, t)
-//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t, "Test Stats after shutdown was initiated. Status Service Unavailable")
+//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t)
 
 //	response, e = tls.SendRequest(mdl.POST_METHOD, mdl.HASH, nil, mdl.JSON)
 //	tls.AssertError(e, t)
-//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t, "Test Stats after shutdown was initiated. Status Service Unavailable")
+//	tls.AssertEquals(http.StatusServiceUnavailable, response.StatusCode(), t)
 //}

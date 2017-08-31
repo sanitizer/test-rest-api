@@ -13,6 +13,7 @@ const (
 	XML = "application/xml"
 	HASH_LEN = 88
 	MAX_UINT = ^uint64(0)
+	AVG_LATENCY = 40
 )
 
 

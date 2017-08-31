@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 	"sync/atomic"
 )
@@ -30,12 +29,12 @@ func TestHashPostMethodWithNRequests(t *testing.T) {
 			if http.StatusCreated != response.StatusCode() {
 				atomic.AddUint32(&counter, 1)
 			}
-			tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Creating hash with routine #" + strconv.Itoa(i))
+			tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 		}(i)
 	}
 
 	wg.Wait()
-	tls.AssertEquals(0, int(atomic.LoadUint32(&counter)), t, "Validate number of failed routines in POST")
+	tls.AssertEquals(0, int(atomic.LoadUint32(&counter)), t)
 }
 
 /*
@@ -48,7 +47,7 @@ func TestHashGetMethodWithNRequests(t *testing.T) {
 	req, e := json.Marshal(mdl.ReqBody{Password: "tesdgsdgsetsgdsdg"})
 	tls.AssertError(e, t)
 	response, e := tls.SendRequest(mdl.POST_METHOD, mdl.HASH, bytes.NewBuffer(req), mdl.JSON)
-	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t, "Creating initial hash")
+	tls.AssertEquals(http.StatusCreated, response.StatusCode(), t)
 	jobId := string(response.Body())
 
 	for i := 1; i <= 1000; i++ {
@@ -62,10 +61,10 @@ func TestHashGetMethodWithNRequests(t *testing.T) {
 			if http.StatusOK != r.StatusCode() {
 				atomic.AddUint32(&counter, 1)
 			}
-			tls.AssertEquals(http.StatusOK, r.StatusCode(), t, "Getting hash with routine #" + strconv.Itoa(i))
+			tls.AssertEquals(http.StatusOK, r.StatusCode(), t)
 		}(i, jobId)
 	}
 
 	wg.Wait()
-	tls.AssertEquals(0, int(atomic.LoadUint32(&counter)), t, "Validate number of failed routines in GET")
+	tls.AssertEquals(0, int(atomic.LoadUint32(&counter)), t)
 }
